@@ -1,4 +1,8 @@
 jareplugin_src
 ==============
 
-Java Rule Engine Plugin Step fpr Pentaho PDI
+Java Rule Engine Plugin Step for Pentaho PDI
+
+Java source files
+
+
