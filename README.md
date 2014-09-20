@@ -1,9 +1,9 @@
 jareplugin_src
 ==============
 
-Java Rule Engine Plugin Step for Pentaho PDI
+Java Rule Engine Plugin Step for Pentaho PDI.
 
-Java source files for the Pentaho Rule Engine Plugin Step.
+Java source files for the Pentaho Rule Engine Plugin Step. The compiled files are also available on github.
 
    Copyright (C) 2008-2014  Uwe Geercken
     
@@ -22,6 +22,6 @@ Java source files for the Pentaho Rule Engine Plugin Step.
 
 Uwe Geercken - uwe.geercken@web.de
 
-last update: 2014-08-06
+last update: 2014-09-20
 
 
