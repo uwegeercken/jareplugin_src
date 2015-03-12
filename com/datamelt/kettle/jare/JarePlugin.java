@@ -134,8 +134,6 @@ public class JarePlugin extends BaseStep implements StepInterface
             	{
             		ZipFile zip = new ZipFile(realFilename);
             		ruleEngine = new BusinessRulesEngine(zip);
-            		ruleEngine.setPrintStream(null);
-            		ruleEngine.setActionsPrintStream(null);
             	}
             	// we can also use a directory and read all files from there
             	else if(f.isDirectory())
@@ -166,15 +164,10 @@ public class JarePlugin extends BaseStep implements StepInterface
             		File[] listOfFiles = f.listFiles(fileNameFilter);
             		// initialize rule engine with list of files
             		ruleEngine = new BusinessRulesEngine(listOfFiles);
-            		// we do not want to create an extra output stream here
-            		ruleEngine.setPrintStream(null);
-            		ruleEngine.setActionsPrintStream(null);
             	}
             	else if(f.isFile())
             	{
             		ruleEngine = new BusinessRulesEngine(realFilename);
-            		ruleEngine.setPrintStream(null);
-            		ruleEngine.setActionsPrintStream(null);
             	}
             	log.logBasic("initialized business rule engine version: " + ruleEngine.getVersion() + " using: " + realFilename);
             }
@@ -362,7 +355,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         // output the rule results 
         try
         {
-        	// only if an rule results step is defined and not if we output only
+        	// only if a rule results step is defined and not if we output only
         	// failed groups but there are none
 	        if(rowsetRuleResults!= null && !(meta.getOutputType()==1 && ruleEngine.getNumberOfGroupsFailed()==0))
 	        {
