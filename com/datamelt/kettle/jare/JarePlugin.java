@@ -51,7 +51,7 @@ import com.datamelt.util.RowFieldCollection;
  * @author uwe geercken - uwe.geercken@web.de
  * 
  * version 0.2.0 
- * last update: 2014-03-04 
+ * last update: 2015-03-25 
  */
 
 public class JarePlugin extends BaseStep implements StepInterface

@@ -23,8 +23,6 @@ import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
-import org.pentaho.di.ui.core.database.dialog.DatabaseDialog;
-//import org.springframework.jmx.export.assembler.MetadataMBeanInfoAssembler;
 
 public class JarePluginDialog extends BaseStepDialog implements StepDialogInterface
 {
@@ -34,7 +32,6 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 	private Text         wTextRuleFile, wTextStepname;
 	private Combo		 wComboOutputType, wComboStepRuleResults, wComboStepMain;
 	private FormData     wFormRuleFile, wFormStepname, wFormOutputType, wFormStepMain, wFormStepRuleResults;
-	private DatabaseDialog wDialog;
 
 	public JarePluginDialog(Shell parent, Object in, TransMeta transMeta, String sname)
 	{
