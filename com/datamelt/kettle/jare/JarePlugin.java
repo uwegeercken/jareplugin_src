@@ -50,8 +50,8 @@ import com.datamelt.util.RowFieldCollection;
  * 
  * @author uwe geercken - uwe.geercken@web.de
  * 
- * version 0.2.0 
- * last update: 2015-03-25 
+ * version 0.2.1 
+ * last update: 2016-07-06 
  */
 
 public class JarePlugin extends BaseStep implements StepInterface
@@ -169,7 +169,7 @@ public class JarePlugin extends BaseStep implements StepInterface
             	{
             		ruleEngine = new BusinessRulesEngine(realFilename);
             	}
-            	log.logBasic("initialized business rule engine version: " + ruleEngine.getVersion() + " using: " + realFilename);
+            	log.logBasic("initialized business rule engine version: " + BusinessRulesEngine.getVersion() + " using: " + realFilename);
             }
             catch(SAXException se)
             {
