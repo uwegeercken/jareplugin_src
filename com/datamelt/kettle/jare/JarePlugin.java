@@ -50,8 +50,8 @@ import com.datamelt.util.RowFieldCollection;
  * 
  * @author uwe geercken - uwe.geercken@web.de
  * 
- * version 0.2.1 
- * last update: 2016-07-06 
+ * version 0.2.2 
+ * last update: 2016-07-09 
  */
 
 public class JarePlugin extends BaseStep implements StepInterface
@@ -129,6 +129,10 @@ public class JarePlugin extends BaseStep implements StepInterface
             try
             {
             	File f = new File(realFilename);
+            	if(!f.exists())
+            	{
+            		throw new FileNotFoundException("the  specified file was not found: " + realFilename);
+            	}
             	// we can use a zip file containing all rules
             	if(f.isFile() && realFilename.endsWith(".zip"))
             	{
@@ -224,7 +228,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         // run the rule engine
         try
         {
-        	ruleEngine.run("row number: " + getLinesRead(),fields);
+        	ruleEngine.run("row number: " ,fields);
         	if(log.isDetailed())
         	{
         		for(int i=0;i<ruleEngine.getGroups().size();i++)
@@ -501,7 +505,16 @@ public class JarePlugin extends BaseStep implements StepInterface
 				{
 					found=true;
 					String parameterName = matcher.group(1).substring(2,matcher.group(1).length()-1);
-					String parameterValue = getTransMeta().getVariable(parameterName);
+					String parameterValue = null;
+					try
+					{
+						parameterValue=getTrans().getParameterValue(parameterName);
+					}
+					catch(Exception ex)
+					{
+						
+					}
+
 					if(parameterValue != null)
 					{
 						returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
