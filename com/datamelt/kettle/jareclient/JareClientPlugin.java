@@ -259,14 +259,17 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 			markStop();
 		}
 	}
+
 	/**
-	 * translates a parameter or multiple ones in the form of ${param}
+	 * translates a parameter/variable or multiple ones in the form of ${param}
 	 * into the actual value. if no parameter value  is found, returns
 	 * the value that was passed to this method.
 	 */
 	private String getRealName(String value)
 	{
 		String pattern = "(\\$\\{.+?\\})";
+		String filePattern = "file://";
+		
 		if(value!= null)
 		{
 			String returnValue=value;
@@ -279,10 +282,34 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 				{
 					found=true;
 					String parameterName = matcher.group(1).substring(2,matcher.group(1).length()-1);
-					String parameterValue = getTransMeta().getVariable(parameterName);
+					String parameterValue = null;
+					try
+					{
+						log.logDebug("trying to retieve parameter: " + parameterName);
+						parameterValue=getTrans().getParameterValue(parameterName);
+					}
+					catch(Exception ex)
+					{
+						log.logError("error retieving parameter: " + parameterName);
+						setStopped(true);
+			       		setOutputDone();
+			       		setErrors(1);
+			       		stopAll();
+					}
+
 					if(parameterValue != null)
 					{
+						log.logDebug("parameter found: " + parameterName + " - value: " + parameterValue);
 						returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
+					}
+					else
+					{
+						log.logDebug("parameter not found. trying to retieve variable: " + parameterName);
+						parameterValue=getTransMeta().getVariable(parameterName);
+						if(parameterValue != null)
+						{
+							returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
+						}
 					}
 				}
 				else
@@ -290,6 +317,8 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 					found = false;
 				}
 			} while (found);
+			
+			log.logDebug("return value for: " + value + "=" + returnValue);
 			return returnValue;
 		}
 		else
@@ -297,7 +326,7 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 			return value;
 		}
 	}
-	
+
 	private void addFieldsToRowMeta(RowMetaInterface r, String origin)
 	{
 		ValueMetaInterface totalGroups=new ValueMeta("ruleengine_groups", ValueMeta.TYPE_INTEGER);

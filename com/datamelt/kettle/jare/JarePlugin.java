@@ -109,6 +109,7 @@ public class JarePlugin extends BaseStep implements StepInterface
 		// only done on the first row
 		if (first)
         {
+			log.logDebug("processing first row");
 			// number of fields of the input row
             inputSize = getInputRowMeta().size();
             
@@ -123,11 +124,13 @@ public class JarePlugin extends BaseStep implements StepInterface
             inputRowMeta = getInputRowMeta();
             // names of the fields
             fieldNames = inputRowMeta.getFieldNames();
+            log.logDebug("found input fields: " + fieldNames.length);
             
             // filename of the rule engine xml file
             realFilename = getRealName(meta.getRuleFileName());
             try
             {
+            	log.logDebug("trying to use file for the ruleengine: " + realFilename);
             	File f = new File(realFilename);
             	if(!f.exists())
             	{
@@ -136,6 +139,7 @@ public class JarePlugin extends BaseStep implements StepInterface
             	// we can use a zip file containing all rules
             	if(f.isFile() && realFilename.endsWith(".zip"))
             	{
+            		log.logDebug("found zip file to read xml rule files: " + realFilename);
             		ZipFile zip = new ZipFile(realFilename);
             		ruleEngine = new BusinessRulesEngine(zip);
             	}
@@ -143,6 +147,7 @@ public class JarePlugin extends BaseStep implements StepInterface
             	else if(f.isDirectory())
             	{
             		// use a filter - we only want to read xml files
+            		log.logDebug("found directory to read xml rules files: " + realFilename);
             		FilenameFilter fileNameFilter = new FilenameFilter()
             		{
                         @Override
@@ -171,6 +176,7 @@ public class JarePlugin extends BaseStep implements StepInterface
             	}
             	else if(f.isFile())
             	{
+            		log.logDebug("found single xml rules file: " + realFilename);
             		ruleEngine = new BusinessRulesEngine(realFilename);
             	}
             	log.logBasic("initialized business rule engine version: " + BusinessRulesEngine.getVersion() + " using: " + realFilename);
@@ -225,10 +231,12 @@ public class JarePlugin extends BaseStep implements StepInterface
         		fields.addField(fieldNames[i],null);  
         	}
         }
+        log.logDebug("number of fields: " + fields.getNumberOfFields());
         // run the rule engine
         try
         {
-        	ruleEngine.run("row number: " ,fields);
+        	log.logDebug("running the ruleengine");
+        	ruleEngine.run("row number: " + getLinesRead() ,fields);
         	if(log.isDetailed())
         	{
         		for(int i=0;i<ruleEngine.getGroups().size();i++)
@@ -364,14 +372,15 @@ public class JarePlugin extends BaseStep implements StepInterface
 	        if(rowsetRuleResults!= null && !(meta.getOutputType()==1 && ruleEngine.getNumberOfGroupsFailed()==0))
 	        {
 	        	// loop over all groups
-	            for(int f=0;f<ruleEngine.getGroups().size();f++)
+	        	log.logDebug("looping all rulegroups");
+	        	for(int f=0;f<ruleEngine.getGroups().size();f++)
 	            {
 	            	RuleGroup group = ruleEngine.getGroups().get(f);
 	            	// output groups with all rules depending on the output type selection
 		        	if(meta.getOutputType()==0 || (meta.getOutputType()==1 && group.getFailed()==1) || (meta.getOutputType()==2 && group.getFailed()==1) || (meta.getOutputType()==3 && group.getFailed()==0) || (meta.getOutputType()==4 && group.getFailed()==0))
 	            	{
 		            	// loop over all subgroups
-		            	for(int g=0;g<group.getSubGroups().size();g++)
+		        		for(int g=0;g<group.getSubGroups().size();g++)
 		                {
 		            		RuleSubGroup subgroup = group.getSubGroups().get(g);
 		            		ArrayList <RuleExecutionResult> results = subgroup.getExecutionCollection().getResults();
@@ -420,6 +429,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         // add the generated field values to the main output row
         try
         {
+        	log.logDebug("adding ruleengine fields to output row");
 	        outputRow[inputSize] = (long)ruleEngine.getNumberOfGroups();
 	        outputRow[inputSize +1] = (long)ruleEngine.getNumberOfGroupsFailed();
 	        outputRow[inputSize +2] = (long)ruleEngine.getNumberOfRules();
@@ -485,14 +495,17 @@ public class JarePlugin extends BaseStep implements StepInterface
 			markStop();
 		}
 	}
+	
 	/**
-	 * translates a parameter or multiple ones in the form of ${param}
+	 * translates a parameter/variable or multiple ones in the form of ${someparam}
 	 * into the actual value. if no parameter value  is found, returns
 	 * the value that was passed to this method.
 	 */
 	private String getRealName(String value)
 	{
 		String pattern = "(\\$\\{.+?\\})";
+		String filePattern = "file://";
+		
 		if(value!= null)
 		{
 			String returnValue=value;
@@ -508,16 +521,39 @@ public class JarePlugin extends BaseStep implements StepInterface
 					String parameterValue = null;
 					try
 					{
+						log.logDebug("trying to retieve parameter: " + parameterName);
 						parameterValue=getTrans().getParameterValue(parameterName);
 					}
 					catch(Exception ex)
 					{
-						
+						log.logError("error retieving parameter: " + parameterName);
+						setStopped(true);
+			       		setOutputDone();
+			       		setErrors(1);
+			       		stopAll();
 					}
 
 					if(parameterValue != null)
 					{
+						if(parameterValue.startsWith(filePattern))
+						{
+							parameterValue = parameterValue.substring(filePattern.length());
+						}
+						log.logDebug("parameter found: " + parameterName + " - value: " + parameterValue);
 						returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
+					}
+					else
+					{
+						log.logDebug("parameter not found. trying to retieve variable: " + parameterName);
+						parameterValue=getTransMeta().getVariable(parameterName);
+						if(parameterValue != null)
+						{
+							if(parameterValue.startsWith(filePattern))
+							{
+								parameterValue = parameterValue.substring(filePattern.length());
+							}
+							returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
+						}
 					}
 				}
 				else
@@ -525,6 +561,7 @@ public class JarePlugin extends BaseStep implements StepInterface
 					found = false;
 				}
 			} while (found);
+			log.logDebug("return value for: " + value + "=" + returnValue);
 			return returnValue;
 		}
 		else
