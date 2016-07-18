@@ -101,7 +101,7 @@ public class JareClientPlugin extends BaseStep implements StepInterface
             try
             {
             	// create client connection to server
-            	client = new RuleEngineClient(meta.getServer(),Integer.parseInt(meta.getServerPort()));
+            	client = new RuleEngineClient(getRealName(meta.getServer()),Integer.parseInt(getRealName(meta.getServerPort())));
             }
             catch(Exception ex)
             {
@@ -261,7 +261,7 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 	}
 
 	/**
-	 * translates a parameter/variable or multiple ones in the form of ${param}
+	 * translates a parameter/variable or multiple ones in the form of ${someparam}
 	 * into the actual value. if no parameter value  is found, returns
 	 * the value that was passed to this method.
 	 */
@@ -299,6 +299,10 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 
 					if(parameterValue != null)
 					{
+						if(parameterValue.startsWith(filePattern))
+						{
+							parameterValue = parameterValue.substring(filePattern.length());
+						}
 						log.logDebug("parameter found: " + parameterName + " - value: " + parameterValue);
 						returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
 					}
@@ -308,6 +312,10 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 						parameterValue=getTransMeta().getVariable(parameterName);
 						if(parameterValue != null)
 						{
+							if(parameterValue.startsWith(filePattern))
+							{
+								parameterValue = parameterValue.substring(filePattern.length());
+							}
 							returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
 						}
 					}
@@ -317,7 +325,6 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 					found = false;
 				}
 			} while (found);
-			
 			log.logDebug("return value for: " + value + "=" + returnValue);
 			return returnValue;
 		}
