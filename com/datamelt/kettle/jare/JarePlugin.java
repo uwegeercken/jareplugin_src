@@ -14,8 +14,9 @@ import org.pentaho.di.core.RowSet;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.ValueMetaInteger;
+import org.pentaho.di.core.row.value.ValueMetaString;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -50,8 +51,8 @@ import com.datamelt.util.RowFieldCollection;
  * 
  * @author uwe geercken - uwe.geercken@web.de
  * 
- * version 0.2.2 
- * last update: 2016-07-09 
+ * version 0.3 
+ * last update: 2016-07-21 
  */
 
 public class JarePlugin extends BaseStep implements StepInterface
@@ -574,63 +575,77 @@ public class JarePlugin extends BaseStep implements StepInterface
 	{
 		if(ruleResults)
 		{
-			ValueMetaInterface group = new ValueMeta("ruleengine_group", ValueMeta.TYPE_STRING);
+			//ValueMetaInterface group = new ValueMeta("ruleengine_group", ValueMeta.TYPE_STRING);
+			ValueMetaInterface group = new ValueMetaString("ruleengine_group");
 			group.setOrigin(origin);
 			r.addValueMeta( group );
 			
-			ValueMetaInterface groupFailed = new ValueMeta("ruleengine_group_failed", ValueMeta.TYPE_INTEGER);
+			//ValueMetaInterface groupFailed = new ValueMeta("ruleengine_group_failed", ValueMeta.TYPE_INTEGER);
+			ValueMetaInterface groupFailed = new ValueMetaInteger("ruleengine_group_failed");
 			groupFailed.setOrigin(origin);
 			r.addValueMeta( groupFailed );
 			
-			ValueMetaInterface subgroup = new ValueMeta("ruleengine_subgroup", ValueMeta.TYPE_STRING);
+			//ValueMetaInterface subgroup = new ValueMeta("ruleengine_subgroup", ValueMeta.TYPE_STRING);
+			ValueMetaInterface subgroup = new ValueMetaString("ruleengine_subgroup");
 			subgroup.setOrigin(origin);
 			r.addValueMeta( subgroup );
 
-			ValueMetaInterface subgroupFailed = new ValueMeta("ruleengine_subgroup_failed", ValueMeta.TYPE_INTEGER);
+			//ValueMetaInterface subgroupFailed = new ValueMeta("ruleengine_subgroup_failed", ValueMeta.TYPE_INTEGER);
+			ValueMetaInterface subgroupFailed = new ValueMetaInteger("ruleengine_subgroup_failed");
 			subgroupFailed.setOrigin(origin);
 			r.addValueMeta( subgroupFailed );
 
-			ValueMetaInterface subgroupIntergroupOperator = new ValueMeta("ruleengine_subgroup_intergroup_operator", ValueMeta.TYPE_STRING);
+			//ValueMetaInterface subgroupIntergroupOperator = new ValueMeta("ruleengine_subgroup_intergroup_operator", ValueMeta.TYPE_STRING);
+			ValueMetaInterface subgroupIntergroupOperator = new ValueMetaString("ruleengine_subgroup_intergroup_operator");
 			subgroupIntergroupOperator.setOrigin(origin);
 			r.addValueMeta( subgroupIntergroupOperator );
 
-			ValueMetaInterface subgroupRuleOperator = new ValueMeta("ruleengine_subgroup_rule_operator", ValueMeta.TYPE_STRING);
+			//ValueMetaInterface subgroupRuleOperator = new ValueMeta("ruleengine_subgroup_rule_operator", ValueMeta.TYPE_STRING);
+			ValueMetaInterface subgroupRuleOperator = new ValueMetaString("ruleengine_subgroup_rule_operator");
 			subgroupRuleOperator.setOrigin(origin);
 			r.addValueMeta( subgroupRuleOperator );
 			
-			ValueMetaInterface rule = new ValueMeta("ruleengine_rule", ValueMeta.TYPE_STRING);
+			//ValueMetaInterface rule = new ValueMeta("ruleengine_rule", ValueMeta.TYPE_STRING);
+			ValueMetaInterface rule = new ValueMetaString("ruleengine_rule");
 			rule.setOrigin(origin);
 			r.addValueMeta( rule );
 			
-			ValueMetaInterface ruleFailed = new ValueMeta("ruleengine_rule_failed", ValueMeta.TYPE_INTEGER);
+			//ValueMetaInterface ruleFailed = new ValueMeta("ruleengine_rule_failed", ValueMeta.TYPE_INTEGER);
+			ValueMetaInterface ruleFailed = new ValueMetaInteger("ruleengine_rule_failed");
 			ruleFailed.setOrigin(origin);
 			r.addValueMeta( ruleFailed );
 			
-			ValueMetaInterface ruleMessage = new ValueMeta("ruleengine_message", ValueMeta.TYPE_STRING);
+			//ValueMetaInterface ruleMessage = new ValueMeta("ruleengine_message", ValueMeta.TYPE_STRING);
+			ValueMetaInterface ruleMessage = new ValueMetaString("ruleengine_message");
 			ruleMessage.setOrigin(origin);
 			r.addValueMeta( ruleMessage );
 		}
 		else if(!ruleResults)
 		{
-			ValueMetaInterface totalGroups=new ValueMeta("ruleengine_groups", ValueMeta.TYPE_INTEGER);
+			//ValueMetaInterface totalGroups=new ValueMeta("ruleengine_groups", ValueMeta.TYPE_INTEGER);
+			ValueMetaInterface totalGroups=new ValueMetaInteger("ruleengine_groups");
 			totalGroups.setOrigin(origin);
 			r.addValueMeta( totalGroups );
 			
-			ValueMetaInterface totalGroupsFailed=new ValueMeta("ruleengine_groups_failed", ValueMeta.TYPE_INTEGER);
+			//ValueMetaInterface totalGroupsFailed=new ValueMeta("ruleengine_groups_failed", ValueMeta.TYPE_INTEGER);
+			ValueMetaInterface totalGroupsFailed=new ValueMetaInteger("ruleengine_groups_failed");
 			totalGroupsFailed.setOrigin(origin);
 			r.addValueMeta( totalGroupsFailed );
 			
-			ValueMetaInterface totalRules=new ValueMeta("ruleengine_rules", ValueMeta.TYPE_INTEGER);
+			//ValueMetaInterface totalRules=new ValueMeta("ruleengine_rules", ValueMeta.TYPE_INTEGER);
+			ValueMetaInterface totalRules=new ValueMetaInteger("ruleengine_rules");
 			totalRules.setOrigin(origin);
 			r.addValueMeta( totalRules );
 			
-			ValueMetaInterface totalRulesFailed=new ValueMeta("ruleengine_rules_failed", ValueMeta.TYPE_INTEGER);
+			//ValueMetaInterface totalRulesFailed=new ValueMeta("ruleengine_rules_failed", ValueMeta.TYPE_INTEGER);
+			ValueMetaInterface totalRulesFailed=new ValueMetaInteger("ruleengine_rules_failed");
 			totalRulesFailed.setOrigin(origin);
 			r.addValueMeta( totalRulesFailed );
 			
-			ValueMetaInterface totalActions=new ValueMeta("ruleengine_actions", ValueMeta.TYPE_INTEGER);
+			//ValueMetaInterface totalActions=new ValueMeta("ruleengine_actions", ValueMeta.TYPE_INTEGER);
+			ValueMetaInterface totalActions=new ValueMetaInteger("ruleengine_actions");
 			totalActions.setOrigin(origin);
 			r.addValueMeta( totalActions );
-		}		
+		}
 	}
 }

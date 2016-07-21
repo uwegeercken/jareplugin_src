@@ -7,14 +7,17 @@ import org.eclipse.swt.widgets.Shell;
 import org.pentaho.di.core.CheckResult;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Counter;
+import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleDatabaseException;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleXMLException;
+import org.pentaho.di.core.injection.Injection;
+import org.pentaho.di.core.injection.InjectionSupported;
 import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.ValueMetaInteger;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.xml.XMLHandler;
 import org.pentaho.di.repository.ObjectId;
@@ -29,9 +32,15 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.w3c.dom.Node;
 
+@Step( id = "Jare_Rule_Engine_Client_Plugin", image = "check_ok.png.svg", i18nPackageName = "com.datamelt.kettle.jare",
+name = "Jare_Rule_Engine_Client_Plugin.Step.Name", description = "Jare_Rule_Engine_Client_Plugin.Step.Description", categoryDescription = "Validation" )
+@InjectionSupported( localizationPrefix = "JarePluginDialog.Injection.")
 public class JareClientPluginMeta extends BaseStepMeta implements StepMetaInterface
 {
+	@Injection( name = "SERVER" )
 	private String server;
+	
+	@Injection( name = "SERVER_PORT" )
 	private String serverPort;
 	
 	public JareClientPluginMeta()
@@ -96,23 +105,28 @@ public class JareClientPluginMeta extends BaseStepMeta implements StepMetaInterf
 	
 	public void getFields(RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep, VariableSpace space) throws KettleStepException
 	{
-		ValueMetaInterface totalGroups=new ValueMeta("ruleengine_groups", ValueMeta.TYPE_INTEGER);
+		//ValueMetaInterface totalGroups=new ValueMeta("ruleengine_groups", ValueMeta.TYPE_INTEGER);
+		ValueMetaInterface totalGroups=new ValueMetaInteger("ruleengine_groups");
 		totalGroups.setOrigin(origin);
 		rowMeta.addValueMeta( totalGroups );
 		
-		ValueMetaInterface totalGroupsFailed=new ValueMeta("ruleengine_groups_failed", ValueMeta.TYPE_INTEGER);
+		//ValueMetaInterface totalGroupsFailed=new ValueMeta("ruleengine_groups_failed", ValueMeta.TYPE_INTEGER);
+		ValueMetaInterface totalGroupsFailed=new ValueMetaInteger("ruleengine_groups_failed");
 		totalGroupsFailed.setOrigin(origin);
 		rowMeta.addValueMeta( totalGroupsFailed );
 		
-		ValueMetaInterface totalRules=new ValueMeta("ruleengine_rules", ValueMeta.TYPE_INTEGER);
+		//ValueMetaInterface totalRules=new ValueMeta("ruleengine_rules", ValueMeta.TYPE_INTEGER);
+		ValueMetaInterface totalRules=new ValueMetaInteger("ruleengine_rules");
 		totalRules.setOrigin(origin);
 		rowMeta.addValueMeta( totalRules );
 		
-		ValueMetaInterface totalRulesFailed=new ValueMeta("ruleengine_rules_failed", ValueMeta.TYPE_INTEGER);
+		//ValueMetaInterface totalRulesFailed=new ValueMeta("ruleengine_rules_failed", ValueMeta.TYPE_INTEGER);
+		ValueMetaInterface totalRulesFailed=new ValueMetaInteger("ruleengine_rules_failed");
 		totalRulesFailed.setOrigin(origin);
 		rowMeta.addValueMeta( totalRulesFailed );
 		
-		ValueMetaInterface totalActions=new ValueMeta("ruleengine_actions", ValueMeta.TYPE_INTEGER);
+		//ValueMetaInterface totalActions=new ValueMeta("ruleengine_actions", ValueMeta.TYPE_INTEGER);
+		ValueMetaInterface totalActions=new ValueMetaInteger("ruleengine_actions");
 		totalActions.setOrigin(origin);
 		rowMeta.addValueMeta( totalActions );
 	}
