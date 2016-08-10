@@ -51,8 +51,8 @@ import com.datamelt.util.RowFieldCollection;
  * 
  * @author uwe geercken - uwe.geercken@web.de
  * 
- * version 0.3 
- * last update: 2016-07-21 
+ * version 0.31 
+ * last update: 2016-08-10 
  */
 
 public class JarePlugin extends BaseStep implements StepInterface
@@ -207,6 +207,13 @@ public class JarePlugin extends BaseStep implements StepInterface
             	setErrors(1);
             	return false;
             }
+            
+            // if we do not output the detailed rule results, we do not store the
+        	// execution results. this will speedup processing
+        	if(rowsetRuleResults== null)
+        	{
+        		ruleEngine.setPreserveRuleExcecutionResults(false);
+        	}
             first = false;
         }
 
@@ -372,7 +379,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         	// failed groups but there are none
 	        if(rowsetRuleResults!= null && !(meta.getOutputType()==1 && ruleEngine.getNumberOfGroupsFailed()==0))
 	        {
-	        	// loop over all groups
+	        	// loop over all groupserror
 	        	log.logDebug("looping all rulegroups");
 	        	for(int f=0;f<ruleEngine.getGroups().size();f++)
 	            {
@@ -455,7 +462,11 @@ public class JarePlugin extends BaseStep implements StepInterface
         
         // clear the results for the next run. if this is not done, the results
         // of the rule engine will accumulate
-        ruleEngine.getRuleExecutionCollection().clear();
+        // but only if the results are not excluded anyway
+        if(!ruleEngine.getPreserveRuleExcecutionResults())
+        {
+        	ruleEngine.getRuleExecutionCollection().clear();
+        }
         
 		return true;
 	}
