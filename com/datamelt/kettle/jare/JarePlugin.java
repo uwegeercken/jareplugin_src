@@ -208,12 +208,7 @@ public class JarePlugin extends BaseStep implements StepInterface
             	return false;
             }
             
-            // if we do not output the detailed rule results, we do not store the
-        	// execution results. this will speedup processing
-        	if(rowsetRuleResults== null)
-        	{
-        		ruleEngine.setPreserveRuleExcecutionResults(false);
-        	}
+       		ruleEngine.setPreserveRuleExcecutionResults(false);
             first = false;
         }
 
@@ -418,6 +413,7 @@ public class JarePlugin extends BaseStep implements StepInterface
 			                    	outputRowRuleResultsCloned=null;
 		            			}
 		                    }
+		            		results.clear();
 		                }
 	            	}
 	            }
@@ -440,9 +436,10 @@ public class JarePlugin extends BaseStep implements StepInterface
         	log.logDebug("adding ruleengine fields to output row");
 	        outputRow[inputSize] = (long)ruleEngine.getNumberOfGroups();
 	        outputRow[inputSize +1] = (long)ruleEngine.getNumberOfGroupsFailed();
-	        outputRow[inputSize +2] = (long)ruleEngine.getNumberOfRules();
-	        outputRow[inputSize +3] = (long)ruleEngine.getNumberOfRules() - (long)ruleEngine.getNumberOfRulesPassed();
-	        outputRow[inputSize +4] = (long)ruleEngine.getNumberOfActions();
+	        outputRow[inputSize +2] = (long)ruleEngine.getNumberOfGroupsSkipped();
+	        outputRow[inputSize +3] = (long)ruleEngine.getNumberOfRules();
+	        outputRow[inputSize +4] = (long)ruleEngine.getNumberOfRulesFailed();
+	        outputRow[inputSize +5] = (long)ruleEngine.getNumberOfActions();
 	        
 	        // original line with only one output step
 	        // putRow(data.outputRowMeta, outputRow);
@@ -459,14 +456,9 @@ public class JarePlugin extends BaseStep implements StepInterface
         	return false;
         }
         
-        
         // clear the results for the next run. if this is not done, the results
         // of the rule engine will accumulate
-        // but only if the results are not excluded anyway
-        if(!ruleEngine.getPreserveRuleExcecutionResults())
-        {
-        	ruleEngine.getRuleExecutionCollection().clear();
-        }
+       	ruleEngine.getRuleExecutionCollection().clear();
         
 		return true;
 	}
@@ -586,74 +578,64 @@ public class JarePlugin extends BaseStep implements StepInterface
 	{
 		if(ruleResults)
 		{
-			//ValueMetaInterface group = new ValueMeta("ruleengine_group", ValueMeta.TYPE_STRING);
 			ValueMetaInterface group = new ValueMetaString("ruleengine_group");
 			group.setOrigin(origin);
 			r.addValueMeta( group );
 			
-			//ValueMetaInterface groupFailed = new ValueMeta("ruleengine_group_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface groupFailed = new ValueMetaInteger("ruleengine_group_failed");
 			groupFailed.setOrigin(origin);
 			r.addValueMeta( groupFailed );
 			
-			//ValueMetaInterface subgroup = new ValueMeta("ruleengine_subgroup", ValueMeta.TYPE_STRING);
 			ValueMetaInterface subgroup = new ValueMetaString("ruleengine_subgroup");
 			subgroup.setOrigin(origin);
 			r.addValueMeta( subgroup );
 
-			//ValueMetaInterface subgroupFailed = new ValueMeta("ruleengine_subgroup_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface subgroupFailed = new ValueMetaInteger("ruleengine_subgroup_failed");
 			subgroupFailed.setOrigin(origin);
 			r.addValueMeta( subgroupFailed );
 
-			//ValueMetaInterface subgroupIntergroupOperator = new ValueMeta("ruleengine_subgroup_intergroup_operator", ValueMeta.TYPE_STRING);
 			ValueMetaInterface subgroupIntergroupOperator = new ValueMetaString("ruleengine_subgroup_intergroup_operator");
 			subgroupIntergroupOperator.setOrigin(origin);
 			r.addValueMeta( subgroupIntergroupOperator );
 
-			//ValueMetaInterface subgroupRuleOperator = new ValueMeta("ruleengine_subgroup_rule_operator", ValueMeta.TYPE_STRING);
 			ValueMetaInterface subgroupRuleOperator = new ValueMetaString("ruleengine_subgroup_rule_operator");
 			subgroupRuleOperator.setOrigin(origin);
 			r.addValueMeta( subgroupRuleOperator );
 			
-			//ValueMetaInterface rule = new ValueMeta("ruleengine_rule", ValueMeta.TYPE_STRING);
 			ValueMetaInterface rule = new ValueMetaString("ruleengine_rule");
 			rule.setOrigin(origin);
 			r.addValueMeta( rule );
 			
-			//ValueMetaInterface ruleFailed = new ValueMeta("ruleengine_rule_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface ruleFailed = new ValueMetaInteger("ruleengine_rule_failed");
 			ruleFailed.setOrigin(origin);
 			r.addValueMeta( ruleFailed );
 			
-			//ValueMetaInterface ruleMessage = new ValueMeta("ruleengine_message", ValueMeta.TYPE_STRING);
 			ValueMetaInterface ruleMessage = new ValueMetaString("ruleengine_message");
 			ruleMessage.setOrigin(origin);
 			r.addValueMeta( ruleMessage );
 		}
 		else if(!ruleResults)
 		{
-			//ValueMetaInterface totalGroups=new ValueMeta("ruleengine_groups", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalGroups=new ValueMetaInteger("ruleengine_groups");
 			totalGroups.setOrigin(origin);
 			r.addValueMeta( totalGroups );
 			
-			//ValueMetaInterface totalGroupsFailed=new ValueMeta("ruleengine_groups_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalGroupsFailed=new ValueMetaInteger("ruleengine_groups_failed");
 			totalGroupsFailed.setOrigin(origin);
 			r.addValueMeta( totalGroupsFailed );
 			
-			//ValueMetaInterface totalRules=new ValueMeta("ruleengine_rules", ValueMeta.TYPE_INTEGER);
+			ValueMetaInterface totalGroupSkipped = new ValueMetaInteger("ruleengine_groups_skipped");
+			totalGroupSkipped.setOrigin(origin);
+			r.addValueMeta( totalGroupSkipped );
+			
 			ValueMetaInterface totalRules=new ValueMetaInteger("ruleengine_rules");
 			totalRules.setOrigin(origin);
 			r.addValueMeta( totalRules );
 			
-			//ValueMetaInterface totalRulesFailed=new ValueMeta("ruleengine_rules_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalRulesFailed=new ValueMetaInteger("ruleengine_rules_failed");
 			totalRulesFailed.setOrigin(origin);
 			r.addValueMeta( totalRulesFailed );
 			
-			//ValueMetaInterface totalActions=new ValueMeta("ruleengine_actions", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalActions=new ValueMetaInteger("ruleengine_actions");
 			totalActions.setOrigin(origin);
 			r.addValueMeta( totalActions );
