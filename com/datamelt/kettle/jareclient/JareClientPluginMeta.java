@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */ 
 package com.datamelt.kettle.jareclient;
 
 import java.util.List;
@@ -32,16 +50,17 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.w3c.dom.Node;
 
-@Step( id = "Jare_Rule_Engine_Client_Plugin", image = "check_ok.png.svg", i18nPackageName = "com.datamelt.kettle.jare",
-name = "Jare_Rule_Engine_Client_Plugin.Step.Name", description = "Jare_Rule_Engine_Client_Plugin.Step.Description", categoryDescription = "Validation" )
+@Step( id = "JareRuleEngineClient", image = "check_ok.svg",
+i18nPackageName = "com.datamelt.kettle.jareclient", name = "JareClientPlugin.Step.Name",
+description = "JareClientPlugin.Step.Description",
+categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.Validation",
+documentationUrl = "https://github.com/uwegeercken/jareplugin/wiki/Rule-Engine-Client-Plugin" )
+
 @InjectionSupported( localizationPrefix = "JarePluginDialog.Injection.")
 public class JareClientPluginMeta extends BaseStepMeta implements StepMetaInterface
 {
-	@Injection( name = "SERVER" )
-	private String server;
-	
-	@Injection( name = "SERVER_PORT" )
-	private String serverPort;
+	@Injection( name = "SERVER" ) String server;
+	@Injection( name = "SERVER_PORT" ) String serverPort;
 	
 	public JareClientPluginMeta()
 	{

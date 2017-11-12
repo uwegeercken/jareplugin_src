@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */ 
 package com.datamelt.kettle.jareclient;
 
 import java.math.BigDecimal;
@@ -20,6 +38,7 @@ import org.pentaho.di.trans.step.StepMetaInterface;
 
 import com.datamelt.server.RuleEngineClient;
 import com.datamelt.server.RuleEngineServerObject;
+import com.datamelt.util.HeaderRow;
 import com.datamelt.util.RowField;
 import com.datamelt.util.RowFieldCollection;
 
@@ -51,7 +70,7 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 	private RowMetaInterface inputRowMeta;
 	
 	private RuleEngineClient client = null;
-	private String[] fieldNames;
+	private static HeaderRow header;
 	private int inputSize=0;
 	
 	public JareClientPlugin(StepMeta s, StepDataInterface stepDataInterface, int c, TransMeta t, Trans dis)
@@ -95,8 +114,8 @@ public class JareClientPlugin extends BaseStep implements StepInterface
             addFieldsToRowMeta(data.outputRowMeta, getStepname());
             
             inputRowMeta = getInputRowMeta();
-            // names of the fields
-            fieldNames = inputRowMeta.getFieldNames();
+            // names of the header fields
+            header = new HeaderRow(inputRowMeta.getFieldNames());
             
             try
             {
@@ -115,7 +134,7 @@ public class JareClientPlugin extends BaseStep implements StepInterface
         Object[] outputRow = RowDataUtil.resizeArray(r, data.outputRowMeta.size());
         
         // object/collection that holds all the fields and their values required for running the rule engine
-        RowFieldCollection fields = new RowFieldCollection(fieldNames,r);
+        RowFieldCollection fields = new RowFieldCollection(header,r);
         
         // send row to server and receive the result
         try
@@ -149,7 +168,7 @@ public class JareClientPlugin extends BaseStep implements StepInterface
         	{
 	        	for(int i=0;i<inputSize;i++)
 	            {
-	           		ValueMetaInterface vmi = inputRowMeta.searchValueMeta(fieldNames[i]);
+	           		ValueMetaInterface vmi = inputRowMeta.searchValueMeta(header.getFieldName(i));
 	           		int fieldType = vmi.getType();
 	           		RowField rf = fields.getField(i);
 	           		// if the field has been updated, then get the value appropriate to the type

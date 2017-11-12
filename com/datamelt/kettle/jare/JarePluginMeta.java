@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */ 
 package com.datamelt.kettle.jare;
 
 import java.util.List;
@@ -33,8 +51,13 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.w3c.dom.Node;
 
-@Step( id = "Jare_Rule_Engine_Plugin", image = "check_ok.png.svg", i18nPackageName = "com.datamelt.kettle.jare",
-name = "Jare_Rule_Engine_Plugin.Step.Name", description = "Jare_Rule_Engine_Plugin.Step.Description", categoryDescription = "Validation" )
+@Step( id = "JareRuleEngine", image = "check_ok.svg",
+i18nPackageName = "com.datamelt.kettle.jare", name = "JarePlugin.Step.Name",
+description = "JarePlugin.Step.Description",
+categoryDescription = "i18n:org.pentaho.di.trans.step:BaseStep.Category.Validation",
+documentationUrl = "https://github.com/uwegeercken/jareplugin/wiki/Rule-Engine-Plugin" )
+
+
 @InjectionSupported( localizationPrefix = "JarePluginDialog.Injection.")
 public class JarePluginMeta extends BaseStepMeta implements StepMetaInterface
 {
@@ -47,7 +70,7 @@ public class JarePluginMeta extends BaseStepMeta implements StepMetaInterface
 	@Injection( name = "RULE_RESULTS_STEP_OUTPUT_TYPE" )
 	private int outputType;
 	
-	public JarePluginMeta()
+	public JarePluginMeta() 
 	{
 		super(); // allocate BaseStepInfo
 		
@@ -168,64 +191,79 @@ public class JarePluginMeta extends BaseStepMeta implements StepMetaInterface
 		// we need to give back the appropriate information
 		if( nextStep==null || nextStep.getName().equals(stepMain))
 		{
+			//ValueMetaInterface totalGroups=new ValueMeta("ruleengine_groups", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalGroups=new ValueMetaInteger("ruleengine_groups");
 			totalGroups.setOrigin(origin);
 			rowMeta.addValueMeta( totalGroups );
 			
+			//ValueMetaInterface totalGroupsFailed=new ValueMeta("ruleengine_groups_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalGroupsFailed=new ValueMetaInteger("ruleengine_groups_failed");
 			totalGroupsFailed.setOrigin(origin);
 			rowMeta.addValueMeta( totalGroupsFailed );
 			
+			//ValueMetaInterface totalGroupsSkipped=new ValueMeta("ruleengine_groups_skipped", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalGroupsSkipped=new ValueMetaInteger("ruleengine_groups_skipped");
 			totalGroupsSkipped.setOrigin(origin);
 			rowMeta.addValueMeta( totalGroupsSkipped );
 			
+			//ValueMetaInterface totalRules=new ValueMeta("ruleengine_rules", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalRules=new ValueMetaInteger("ruleengine_rules");
 			totalRules.setOrigin(origin);
 			rowMeta.addValueMeta( totalRules );
 			
+			//ValueMetaInterface totalRulesFailed=new ValueMeta("ruleengine_rules_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalRulesFailed=new ValueMetaInteger("ruleengine_rules_failed");
 			totalRulesFailed.setOrigin(origin);
 			rowMeta.addValueMeta( totalRulesFailed );
 			
+			//ValueMetaInterface totalActions=new ValueMeta("ruleengine_actions", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface totalActions=new ValueMetaInteger("ruleengine_actions");
 			totalActions.setOrigin(origin);
 			rowMeta.addValueMeta( totalActions );
 		}
 		else if(nextStep.getName().equals(stepRuleResults))
 		{
+			//ValueMetaInterface group = new ValueMeta("ruleengine_group", ValueMeta.TYPE_STRING);
 			ValueMetaInterface group = new ValueMetaString("ruleengine_group");
 			group.setOrigin(origin);
 			rowMeta.addValueMeta( group );
 			
+			//ValueMetaInterface groupFailed = new ValueMeta("ruleengine_group_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface groupFailed = new ValueMetaInteger("ruleengine_group_failed");
 			groupFailed.setOrigin(origin);
 			rowMeta.addValueMeta( groupFailed );
 			
+			//ValueMetaInterface subgroup = new ValueMeta("ruleengine_subgroup", ValueMeta.TYPE_STRING);
 			ValueMetaInterface subgroup = new ValueMetaString("ruleengine_subgroup");
 			subgroup.setOrigin(origin);
 			rowMeta.addValueMeta( subgroup );
 
+			//ValueMetaInterface subgroupFailed = new ValueMeta("ruleengine_subgroup_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface subgroupFailed = new ValueMetaInteger("ruleengine_subgroup_failed");
 			subgroupFailed.setOrigin(origin);
 			rowMeta.addValueMeta( subgroupFailed );
 			
+			//ValueMetaInterface subgroupIntergroupOperator = new ValueMeta("ruleengine_subgroup_intergroup_operator", ValueMeta.TYPE_STRING);
 			ValueMetaInterface subgroupIntergroupOperator = new ValueMetaString("ruleengine_subgroup_intergroup_operator");
 			subgroupIntergroupOperator.setOrigin(origin);
 			rowMeta.addValueMeta( subgroupIntergroupOperator );
 			
+			//ValueMetaInterface subgroupRuleOperator = new ValueMeta("ruleengine_subgroup_rule_operator", ValueMeta.TYPE_STRING);
 			ValueMetaInterface subgroupRuleOperator = new ValueMetaString("ruleengine_subgroup_rule_operator");
 			subgroupRuleOperator.setOrigin(origin);
 			rowMeta.addValueMeta( subgroupRuleOperator );
 			
+			//ValueMetaInterface rule = new ValueMeta("ruleengine_rule", ValueMeta.TYPE_STRING);
 			ValueMetaInterface rule = new ValueMetaString("ruleengine_rule");
 			rule.setOrigin(origin);
 			rowMeta.addValueMeta( rule );
 			
+			//ValueMetaInterface ruleFailed = new ValueMeta("ruleengine_rule_failed", ValueMeta.TYPE_INTEGER);
 			ValueMetaInterface ruleFailed = new ValueMetaInteger("ruleengine_rule_failed");
 			ruleFailed.setOrigin(origin);
 			rowMeta.addValueMeta( ruleFailed );
 			
+			//ValueMetaInterface ruleMessage = new ValueMeta("ruleengine_message", ValueMeta.TYPE_STRING);
 			ValueMetaInterface ruleMessage = new ValueMetaString("ruleengine_message");
 			ruleMessage.setOrigin(origin);
 			rowMeta.addValueMeta( ruleMessage );

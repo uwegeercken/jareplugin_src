@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */ 
 package com.datamelt.kettle.jare;
 
 import java.io.File;
@@ -31,6 +49,7 @@ import com.datamelt.rules.core.RuleGroup;
 import com.datamelt.rules.core.RuleSubGroup;
 import com.datamelt.rules.core.XmlRule;
 import com.datamelt.rules.engine.BusinessRulesEngine;
+import com.datamelt.util.HeaderRow;
 import com.datamelt.util.RowField;
 import com.datamelt.util.RowFieldCollection;
 
@@ -64,7 +83,8 @@ public class JarePlugin extends BaseStep implements StepInterface
 	
 	private RowMetaInterface inputRowMeta;
 	
-	private String[] fieldNames;
+	private static HeaderRow header;
+	
 	private int inputSize=0;
 	private String realFilename;
 	
@@ -90,7 +110,7 @@ public class JarePlugin extends BaseStep implements StepInterface
 	    	// and it is not the same as the main output step
 	    	if(meta.getStepRuleResults()!=null && !meta.getStepRuleResults().equals(Messages.getString("JarePluginDialog.Step.RuleResults.Type")) && ! meta.getStepRuleResults().equals(meta.getStepMain()))
 	    	{
-	    		rowsetRuleResults = findOutputRowSet(meta.getStepRuleResults());
+	    		rowsetRuleResults = findOutputRowSet(meta.getStepRuleResults()); 
 	    	}
 	    }
 	    catch(Exception ex)
@@ -124,15 +144,15 @@ public class JarePlugin extends BaseStep implements StepInterface
             
             inputRowMeta = getInputRowMeta();
             // names of the fields
-            fieldNames = inputRowMeta.getFieldNames();
-            log.logDebug("found input fields: " + fieldNames.length);
+            header = new HeaderRow(inputRowMeta.getFieldNames());
+            log.logDebug("number of header fields: " + header.getNumberOfFields());
             
             // filename of the rule engine xml file
             realFilename = getRealName(meta.getRuleFileName());
             try
             {
             	log.logDebug("trying to use file for the ruleengine: " + realFilename);
-            	File f = new File(realFilename);
+            	File f = new File(realFilename); 
             	if(!f.exists())
             	{
             		throw new FileNotFoundException("the  specified file was not found: " + realFilename);
@@ -181,6 +201,10 @@ public class JarePlugin extends BaseStep implements StepInterface
             		ruleEngine = new BusinessRulesEngine(realFilename);
             	}
             	log.logBasic("initialized business rule engine version: " + BusinessRulesEngine.getVersion() + " using: " + realFilename);
+            	if(ruleEngine.getNumberOfGroups()==0)
+        		{
+        			log.logBasic("attention: project zip file contains no rulegroups or no valid ruleroups");
+        		}
             }
             catch(SAXException se)
             {
@@ -208,7 +232,14 @@ public class JarePlugin extends BaseStep implements StepInterface
             	return false;
             }
             
-       		ruleEngine.setPreserveRuleExcecutionResults(false);
+            if(rowsetRuleResults!=null)
+            {
+            	ruleEngine.setPreserveRuleExcecutionResults(true);
+            }
+            else
+            {
+            	ruleEngine.setPreserveRuleExcecutionResults(false);
+            }
             first = false;
         }
 
@@ -219,21 +250,8 @@ public class JarePlugin extends BaseStep implements StepInterface
         Object[] outputRowRuleResults = RowDataUtil.resizeArray(r, data.outputRowMetaRuleResults.size());
         
         // object/collection that holds all the fields and their values required for running the rule engine
-        RowFieldCollection fields = new RowFieldCollection();
+        RowFieldCollection fields = new RowFieldCollection(header,outputRow);
         
-        // all fields are passed to the rule engine. alternatively one could pass single fields
-        // (for performance reasons)
-        for(int i=0;i<fieldNames.length;i++) 
-        {
-        	if(outputRow[i]!=null)
-        	{
-        		fields.addField(fieldNames[i],outputRow[i]);
-        	}
-        	else
-        	{
-        		fields.addField(fieldNames[i],null);  
-        	}
-        }
         log.logDebug("number of fields: " + fields.getNumberOfFields());
         // run the rule engine
         try
@@ -294,7 +312,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         	{
 	        	for(int i=0;i<inputSize;i++)
 	            {
-	           		ValueMetaInterface vmi = inputRowMeta.searchValueMeta(fieldNames[i]);
+	           		ValueMetaInterface vmi = inputRowMeta.searchValueMeta(header.getFieldName(i));
 	           		int fieldType = vmi.getType();
 	           		RowField rf = fields.getField(i);
 	           		// if the field has been updated, then get the value appropriate to the type
@@ -374,7 +392,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         	// failed groups but there are none
 	        if(rowsetRuleResults!= null && !(meta.getOutputType()==1 && ruleEngine.getNumberOfGroupsFailed()==0))
 	        {
-	        	// loop over all groupserror
+	        	// loop over all groups
 	        	log.logDebug("looping all rulegroups");
 	        	for(int f=0;f<ruleEngine.getGroups().size();f++)
 	            {
@@ -537,7 +555,7 @@ public class JarePlugin extends BaseStep implements StepInterface
 			       		stopAll();
 					}
 
-					if(parameterValue != null)
+					if(parameterValue != null && !parameterValue.trim().equals(""))
 					{
 						if(parameterValue.startsWith(filePattern))
 						{
