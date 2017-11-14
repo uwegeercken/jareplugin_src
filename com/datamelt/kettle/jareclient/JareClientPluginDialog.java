@@ -37,6 +37,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
@@ -46,7 +47,8 @@ public class JareClientPluginDialog extends BaseStepDialog implements StepDialog
 	private JareClientPluginMeta input;
 
 	private Label        wLabelServer, wLabelStepname, wLabelServerPort;
-	private Text         wTextServer, wTextStepname, wTextServerPort;
+	private Text         wTextStepname;
+	private TextVar      wTextServer, wTextServerPort;
 	private FormData     wFormServer, wFormStepname, wFormServerPort;
 	
 
@@ -115,7 +117,8 @@ public class JareClientPluginDialog extends BaseStepDialog implements StepDialog
         wFormServer.right= new FormAttachment(middle, -margin);
         wFormServer.top  = new FormAttachment(wTextStepname, margin);
 		wLabelServer.setLayoutData(wFormServer);
-		wTextServer=new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		//wTextServer=new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		wTextServer = new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
 		if(input.getServer()!=null)
 		{
 			wTextServer.setText(input.getServer());
@@ -137,7 +140,7 @@ public class JareClientPluginDialog extends BaseStepDialog implements StepDialog
         wFormServerPort.right= new FormAttachment(middle, -margin);
         wFormServerPort.top  = new FormAttachment(wTextServer, margin);
 		wLabelServerPort.setLayoutData(wFormServerPort);
-		wTextServerPort=new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		wTextServerPort=new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
 		if(input.getServerPort()!=null)
 		{
 			wTextServerPort.setText(input.getServerPort());

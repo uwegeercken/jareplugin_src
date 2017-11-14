@@ -22,10 +22,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.math.BigDecimal;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 import org.pentaho.di.core.RowSet;
@@ -54,38 +54,61 @@ import com.datamelt.util.RowField;
 import com.datamelt.util.RowFieldCollection;
 
 /**
- * Plugin to check data of incomming rows against business rules
- * defined in one or multiple xml files. 
+ * Plugin to check data of incoming rows against business rules
+ * defined in a zip file. the zip file contains groups of rules
+ * (rulegroups) that form a certain logic. 
  * 
- * uses JaRE - Java Rule Engine of datamelt.com
+ * uses JaRE - Java Rule Engine 
  * 
  * Adds various fields to the output row identifying the number of
- * groups, groups failed, number of rules, rules failed and number
- * of actions.
+ * groups, groups failed, groups skipped, number of rules, rules failed
+ * and number of actions.
  * 
- * The results of the rule engine can be written to an second step
- * which will show one line per rule. the output type will determine if
- * all rules are passed, failed ones or passed ones.
- *  
+ * The detailed results of the rule engine can be written to an second step
+ * which will show one line per rule. the output type will determine which
+ * rows are output: all rules, failed ones or passed ones.
+ * 
+ * The business rules and logic can be orchestrated using the Business Rules
+ * Maintenance Tool - a web application freely available under the apache license.
  * 
  * @author uwe geercken - uwe.geercken@web.de
  * 
- * version 0.31 
- * last update: 2016-08-10 
+ * version 0.4
+ * last update: 2017-11-13 
  */
 
 public class JarePlugin extends BaseStep implements StepInterface
 {
+	
+	// fields added to each output row for the detailed output
+	private static final String FIELDNAME_RULEENGINE_GROUP = "ruleengine_group";
+	private static final String FIELDNAME_RULEENGINE_GROUP_FAILED ="ruleengine_group_failed";
+	private static final String FIELDNAME_RULEENGINE_SUBGROUP ="ruleengine_subgroup";
+	private static final String FIELDNAME_RULEENGINE_SUBGROUP_FAILED ="ruleengine_subgroup_failed";
+	private static final String FIELDNAME_RULEENGINE_SUBGROUP_INTERGROUP_OPERATOR ="ruleengine_subgroup_intergroup_operator";
+	private static final String FIELDNAME_RULEENGINE_SUBGROUP_RULE_OPERATOR ="ruleengine_subgroup_rule_operator";
+	private static final String FIELDNAME_RULEENGINE_RULE ="ruleengine_rule";
+	private static final String FIELDNAME_RULEENGINE_RULE_FAILED ="ruleengine_rule_failed";
+	private static final String FIELDNAME_RULEENGINE_MESSAGE ="ruleengine_message";
+
+	// fields added to each output row for the main output
+	private static final String FIELDNAME_RULEENGINE_GROUPS = "ruleengine_groups";
+	private static final String FIELDNAME_RULEENGINE_GROUPS_FAILED = "ruleengine_groups_failed";
+	private static final String FIELDNAME_RULEENGINE_GROUPS_SKIPPED = "ruleengine_groups_skipped";
+	private static final String FIELDNAME_RULEENGINE_RULES = "ruleengine_rules";
+	private static final String FIELDNAME_RULEENGINE_RULES_FAILED = "ruleengine_rules_failed";
+	private static final String FIELDNAME_RULEENGINE_ACTIONS = "ruleengine_actions";
+
 	private BusinessRulesEngine ruleEngine;
 	
     private JarePluginData data;
-	private JarePluginMeta meta;
+	private JarePluginMeta meta;	
+	
 	
 	private RowMetaInterface inputRowMeta;
-	
 	private static HeaderRow header;
-	
 	private int inputSize=0;
+	private String environmentFilename;
 	private String realFilename;
 	
 	public JarePlugin(StepMeta s, StepDataInterface stepDataInterface, int c, TransMeta t, Trans dis)
@@ -98,14 +121,14 @@ public class JarePlugin extends BaseStep implements StepInterface
 		meta = (JarePluginMeta)smi;
 	    data = (JarePluginData)sdi;
 	    
-	    // output for main step
+	    // output for the main step
 	    RowSet rowsetMain =  findOutputRowSet(meta.getStepMain());
-	    //output for rule engine results step
+	    //output for the rule engine results (details) step
 	    RowSet rowsetRuleResults = null;
 	    
 	    try
 	    {
-	    	// check that the rule results step is defined
+	    	// check that the rule results (details) step is defined
 	    	// and it is not set to "no output"
 	    	// and it is not the same as the main output step
 	    	if(meta.getStepRuleResults()!=null && !meta.getStepRuleResults().equals(Messages.getString("JarePluginDialog.Step.RuleResults.Type")) && ! meta.getStepRuleResults().equals(meta.getStepMain()))
@@ -127,7 +150,7 @@ public class JarePlugin extends BaseStep implements StepInterface
 			setOutputDone();
 			return false;
 		}
-		// only done on the first row
+		// do this only for the first row
 		if (first)
         {
 			log.logDebug("processing first row");
@@ -147,15 +170,26 @@ public class JarePlugin extends BaseStep implements StepInterface
             header = new HeaderRow(inputRowMeta.getFieldNames());
             log.logDebug("number of header fields: " + header.getNumberOfFields());
             
-            // filename of the rule engine xml file
-            realFilename = getRealName(meta.getRuleFileName());
+            // filename of the rule engine file might return an URL
+            environmentFilename = environmentSubstitute(meta.getRuleFileName());
+            try
+            {
+            	URL url = new URL(environmentFilename);
+            	realFilename = url.getPath();
+            }
+            catch(MalformedURLException murl)
+            {
+            	realFilename = environmentFilename;
+            }
+            
             try
             {
             	log.logDebug("trying to use file for the ruleengine: " + realFilename);
+            	
             	File f = new File(realFilename); 
             	if(!f.exists())
             	{
-            		throw new FileNotFoundException("the  specified file was not found: " + realFilename);
+            		throw new FileNotFoundException("the specified rule file was not found: " + realFilename);
             	}
             	// we can use a zip file containing all rules
             	if(f.isFile() && realFilename.endsWith(".zip"))
@@ -168,7 +202,7 @@ public class JarePlugin extends BaseStep implements StepInterface
             	else if(f.isDirectory())
             	{
             		// use a filter - we only want to read xml files
-            		log.logDebug("found directory to read xml rules files: " + realFilename);
+            		log.logDebug("found folder to read xml rules files: " + realFilename);
             		FilenameFilter fileNameFilter = new FilenameFilter()
             		{
                         @Override
@@ -203,7 +237,7 @@ public class JarePlugin extends BaseStep implements StepInterface
             	log.logBasic("initialized business rule engine version: " + BusinessRulesEngine.getVersion() + " using: " + realFilename);
             	if(ruleEngine.getNumberOfGroups()==0)
         		{
-        			log.logBasic("attention: project zip file contains no rulegroups or no valid ruleroups");
+        			log.logBasic("attention: project zip file contains no rulegroups or no ruleroups that are active based on the valid from/until date");
         		}
             }
             catch(SAXException se)
@@ -225,13 +259,14 @@ public class JarePlugin extends BaseStep implements StepInterface
             catch(Exception ex)
             {
             	log.logError("error initializing business rule engine with rule file: " + realFilename, ex.toString());
-            	//log.logError(Const.getStackTracker(ex));
             	setStopped(true);
             	setOutputDone();
             	setErrors(1);
             	return false;
             }
             
+            // in case we do a detailed output we need to preserve the results
+            // of the ruleengine execution.
             if(rowsetRuleResults!=null)
             {
             	ruleEngine.setPreserveRuleExcecutionResults(true);
@@ -252,7 +287,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         // object/collection that holds all the fields and their values required for running the rule engine
         RowFieldCollection fields = new RowFieldCollection(header,outputRow);
         
-        log.logDebug("number of fields: " + fields.getNumberOfFields());
+        log.logDebug("number of fields of the row: " + fields.getNumberOfFields());
         // run the rule engine
         try
         {
@@ -303,8 +338,8 @@ public class JarePlugin extends BaseStep implements StepInterface
         	return false;
         }
         
-        // process only updated fields by the rule engine
-        // if there have been actions defined in the rule files
+        // process updated fields by the rule engine.
+        // if nothing was updated we skip this
         try
         {
         	// process only if the collection of fields was changed
@@ -318,7 +353,7 @@ public class JarePlugin extends BaseStep implements StepInterface
 	           		// if the field has been updated, then get the value appropriate to the type
 	           		if(rf.isUpdated())
 	           		{
-	           			log.logRowlevel("field: " + rf.getName() + " [" + fieldType + "] updated from rule engine");
+	           			log.logRowlevel("field: " + rf.getName() + " [" + fieldType + "] was updated by rule engine");
 	           			if(fieldType == ValueMetaInterface.TYPE_BOOLEAN)
 		           		{
 		           			outputRow[i] = rf.getValue();
@@ -375,9 +410,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         }
         catch(Exception ex)
         {
-       		//log.logError("error running business rule engine: " + ex.getStackTrace().toString());
        		log.logError("error updating output fields", ex.toString());
-       		//log.logError(Const.getStackTracker(ex));
        		setStopped(true);
        		setOutputDone();
        		setErrors(1);
@@ -385,7 +418,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         	return false;
         }
         
-        // output the rule results 
+        // output the detailed rule results 
         try
         {
         	// only if a rule results step is defined and not if we output only
@@ -439,7 +472,7 @@ public class JarePlugin extends BaseStep implements StepInterface
         }
         catch(Exception ex)
         {
-        	log.logError("error output to rule results step", ex.toString());
+        	log.logError("error output to rule results detailed step", ex.toString());
         	//log.logError(Const.getStackTracker(ex));
        		setStopped(true);
        		setOutputDone();
@@ -518,143 +551,69 @@ public class JarePlugin extends BaseStep implements StepInterface
 		}
 	}
 	
-	/**
-	 * translates a parameter/variable or multiple ones in the form of ${someparam}
-	 * into the actual value. if no parameter value  is found, returns
-	 * the value that was passed to this method.
-	 */
-	private String getRealName(String value)
-	{
-		String pattern = "(\\$\\{.+?\\})";
-		String filePattern = "file://";
-		
-		if(value!= null)
-		{
-			String returnValue=value;
-			Pattern p = Pattern.compile(pattern);
-			boolean found= false;
-			do
-			{
-				Matcher matcher = p.matcher(returnValue);
-				if (matcher.find()) 
-				{
-					found=true;
-					String parameterName = matcher.group(1).substring(2,matcher.group(1).length()-1);
-					String parameterValue = null;
-					try
-					{
-						log.logDebug("trying to retieve parameter: " + parameterName);
-						parameterValue=getTrans().getParameterValue(parameterName);
-					}
-					catch(Exception ex)
-					{
-						log.logError("error retieving parameter: " + parameterName);
-						setStopped(true);
-			       		setOutputDone();
-			       		setErrors(1);
-			       		stopAll();
-					}
-
-					if(parameterValue != null && !parameterValue.trim().equals(""))
-					{
-						if(parameterValue.startsWith(filePattern))
-						{
-							parameterValue = parameterValue.substring(filePattern.length());
-						}
-						log.logDebug("parameter found: " + parameterName + " - value: " + parameterValue);
-						returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
-					}
-					else
-					{
-						log.logDebug("parameter not found. trying to retieve variable: " + parameterName);
-						parameterValue=getTransMeta().getVariable(parameterName);
-						if(parameterValue != null)
-						{
-							if(parameterValue.startsWith(filePattern))
-							{
-								parameterValue = parameterValue.substring(filePattern.length());
-							}
-							returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
-						}
-					}
-				}
-				else
-				{
-					found = false;
-				}
-			} while (found);
-			log.logDebug("return value for: " + value + "=" + returnValue);
-			return returnValue;
-		}
-		else
-		{
-			return value;
-		}
-	}
-	
 	private void addFieldstoRowMeta(RowMetaInterface r, String origin, boolean ruleResults)
 	{
 		if(ruleResults)
 		{
-			ValueMetaInterface group = new ValueMetaString("ruleengine_group");
+			ValueMetaInterface group = new ValueMetaString(FIELDNAME_RULEENGINE_GROUP);
 			group.setOrigin(origin);
 			r.addValueMeta( group );
 			
-			ValueMetaInterface groupFailed = new ValueMetaInteger("ruleengine_group_failed");
+			ValueMetaInterface groupFailed = new ValueMetaInteger(FIELDNAME_RULEENGINE_GROUP_FAILED);
 			groupFailed.setOrigin(origin);
 			r.addValueMeta( groupFailed );
 			
-			ValueMetaInterface subgroup = new ValueMetaString("ruleengine_subgroup");
+			ValueMetaInterface subgroup = new ValueMetaString(FIELDNAME_RULEENGINE_SUBGROUP);
 			subgroup.setOrigin(origin);
 			r.addValueMeta( subgroup );
 
-			ValueMetaInterface subgroupFailed = new ValueMetaInteger("ruleengine_subgroup_failed");
+			ValueMetaInterface subgroupFailed = new ValueMetaInteger(FIELDNAME_RULEENGINE_SUBGROUP_FAILED);
 			subgroupFailed.setOrigin(origin);
 			r.addValueMeta( subgroupFailed );
 
-			ValueMetaInterface subgroupIntergroupOperator = new ValueMetaString("ruleengine_subgroup_intergroup_operator");
+			ValueMetaInterface subgroupIntergroupOperator = new ValueMetaString(FIELDNAME_RULEENGINE_SUBGROUP_INTERGROUP_OPERATOR);
 			subgroupIntergroupOperator.setOrigin(origin);
 			r.addValueMeta( subgroupIntergroupOperator );
 
-			ValueMetaInterface subgroupRuleOperator = new ValueMetaString("ruleengine_subgroup_rule_operator");
+			ValueMetaInterface subgroupRuleOperator = new ValueMetaString(FIELDNAME_RULEENGINE_SUBGROUP_RULE_OPERATOR);
 			subgroupRuleOperator.setOrigin(origin);
 			r.addValueMeta( subgroupRuleOperator );
 			
-			ValueMetaInterface rule = new ValueMetaString("ruleengine_rule");
+			ValueMetaInterface rule = new ValueMetaString(FIELDNAME_RULEENGINE_RULE);
 			rule.setOrigin(origin);
 			r.addValueMeta( rule );
 			
-			ValueMetaInterface ruleFailed = new ValueMetaInteger("ruleengine_rule_failed");
+			ValueMetaInterface ruleFailed = new ValueMetaInteger(FIELDNAME_RULEENGINE_RULE_FAILED);
 			ruleFailed.setOrigin(origin);
 			r.addValueMeta( ruleFailed );
 			
-			ValueMetaInterface ruleMessage = new ValueMetaString("ruleengine_message");
+			ValueMetaInterface ruleMessage = new ValueMetaString(FIELDNAME_RULEENGINE_MESSAGE);
 			ruleMessage.setOrigin(origin);
 			r.addValueMeta( ruleMessage );
 		}
 		else if(!ruleResults)
 		{
-			ValueMetaInterface totalGroups=new ValueMetaInteger("ruleengine_groups");
+			ValueMetaInterface totalGroups=new ValueMetaInteger(FIELDNAME_RULEENGINE_GROUPS);
 			totalGroups.setOrigin(origin);
 			r.addValueMeta( totalGroups );
 			
-			ValueMetaInterface totalGroupsFailed=new ValueMetaInteger("ruleengine_groups_failed");
+			ValueMetaInterface totalGroupsFailed=new ValueMetaInteger(FIELDNAME_RULEENGINE_GROUPS_FAILED);
 			totalGroupsFailed.setOrigin(origin);
 			r.addValueMeta( totalGroupsFailed );
 			
-			ValueMetaInterface totalGroupSkipped = new ValueMetaInteger("ruleengine_groups_skipped");
+			ValueMetaInterface totalGroupSkipped = new ValueMetaInteger(FIELDNAME_RULEENGINE_GROUPS_SKIPPED);
 			totalGroupSkipped.setOrigin(origin);
 			r.addValueMeta( totalGroupSkipped );
 			
-			ValueMetaInterface totalRules=new ValueMetaInteger("ruleengine_rules");
+			ValueMetaInterface totalRules=new ValueMetaInteger(FIELDNAME_RULEENGINE_RULES);
 			totalRules.setOrigin(origin);
 			r.addValueMeta( totalRules );
 			
-			ValueMetaInterface totalRulesFailed=new ValueMetaInteger("ruleengine_rules_failed");
+			ValueMetaInterface totalRulesFailed=new ValueMetaInteger(FIELDNAME_RULEENGINE_RULES_FAILED);
 			totalRulesFailed.setOrigin(origin);
 			r.addValueMeta( totalRulesFailed );
 			
-			ValueMetaInterface totalActions=new ValueMetaInteger("ruleengine_actions");
+			ValueMetaInterface totalActions=new ValueMetaInteger(FIELDNAME_RULEENGINE_ACTIONS);
 			totalActions.setOrigin(origin);
 			r.addValueMeta( totalActions );
 		}

@@ -20,8 +20,6 @@ package com.datamelt.kettle.jareclient;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowDataUtil;
@@ -59,11 +57,19 @@ import com.datamelt.util.RowFieldCollection;
  * @author uwe geercken - uwe.geercken@web.de
  * 
  * version 0.3 
- * last update: 2016-07-21 
+ * last update: 2017-11-14 
  */
 
 public class JareClientPlugin extends BaseStep implements StepInterface
 {
+	// fields added to each output row for the main output
+	private static final String FIELDNAME_RULEENGINE_GROUPS 		= "ruleengine_groups";
+	private static final String FIELDNAME_RULEENGINE_GROUPS_FAILED 	= "ruleengine_groups_failed";
+	private static final String FIELDNAME_RULEENGINE_GROUPS_SKIPPED = "ruleengine_groups_skipped";
+	private static final String FIELDNAME_RULEENGINE_RULES 			= "ruleengine_rules";
+	private static final String FIELDNAME_RULEENGINE_RULES_FAILED 	= "ruleengine_rules_failed";
+	private static final String FIELDNAME_RULEENGINE_ACTIONS 		= "ruleengine_actions";
+
     private JareClientPluginData data;
 	private JareClientPluginMeta meta;
 	
@@ -117,10 +123,12 @@ public class JareClientPlugin extends BaseStep implements StepInterface
             // names of the header fields
             header = new HeaderRow(inputRowMeta.getFieldNames());
             
+            String serverName = environmentSubstitute(meta.getServer());
+            String serverPort = environmentSubstitute(meta.getServerPort());
             try
             {
             	// create client connection to server
-            	client = new RuleEngineClient(getRealName(meta.getServer()),Integer.parseInt(getRealName(meta.getServerPort())));
+            	client = new RuleEngineClient(serverName,Integer.parseInt(serverPort));
             }
             catch(Exception ex)
             {
@@ -143,9 +151,10 @@ public class JareClientPlugin extends BaseStep implements StepInterface
         	// set the output row fields to the values received by the rule engine server
         	outputRow[inputSize] = (long)response.getTotalGroups();
         	outputRow[inputSize+1] = (long)response.getTotalGroups() - (long)response.getGroupsPassed();
-        	outputRow[inputSize+2] = (long)response.getTotalRules();
-        	outputRow[inputSize+3] = (long)response.getTotalRules() - (long)response.getRulesPassed();
-        	outputRow[inputSize+4] = (long)response.getTotalActions();
+        	outputRow[inputSize+2] = (long)response.getGroupsSkipped();
+        	outputRow[inputSize+3] = (long)response.getTotalRules();
+        	outputRow[inputSize+4] = (long)response.getTotalRules() - (long)response.getRulesPassed();
+        	outputRow[inputSize+5] = (long)response.getTotalActions();
         	
         }
         catch(Exception ex)
@@ -279,104 +288,29 @@ public class JareClientPlugin extends BaseStep implements StepInterface
 		}
 	}
 
-	/**
-	 * translates a parameter/variable or multiple ones in the form of ${someparam}
-	 * into the actual value. if no parameter value  is found, returns
-	 * the value that was passed to this method.
-	 */
-	private String getRealName(String value)
-	{
-		String pattern = "(\\$\\{.+?\\})";
-		String filePattern = "file://";
-		
-		if(value!= null)
-		{
-			String returnValue=value;
-			Pattern p = Pattern.compile(pattern);
-			boolean found= false;
-			do
-			{
-				Matcher matcher = p.matcher(returnValue);
-				if (matcher.find()) 
-				{
-					found=true;
-					String parameterName = matcher.group(1).substring(2,matcher.group(1).length()-1);
-					String parameterValue = null;
-					try
-					{
-						log.logDebug("trying to retieve parameter: " + parameterName);
-						parameterValue=getTrans().getParameterValue(parameterName);
-					}
-					catch(Exception ex)
-					{
-						log.logError("error retieving parameter: " + parameterName);
-						setStopped(true);
-			       		setOutputDone();
-			       		setErrors(1);
-			       		stopAll();
-					}
-
-					if(parameterValue != null)
-					{
-						if(parameterValue.startsWith(filePattern))
-						{
-							parameterValue = parameterValue.substring(filePattern.length());
-						}
-						log.logDebug("parameter found: " + parameterName + " - value: " + parameterValue);
-						returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
-					}
-					else
-					{
-						log.logDebug("parameter not found. trying to retieve variable: " + parameterName);
-						parameterValue=getTransMeta().getVariable(parameterName);
-						if(parameterValue != null)
-						{
-							if(parameterValue.startsWith(filePattern))
-							{
-								parameterValue = parameterValue.substring(filePattern.length());
-							}
-							returnValue = returnValue.replaceFirst(pattern,Matcher.quoteReplacement(parameterValue));
-						}
-					}
-				}
-				else
-				{
-					found = false;
-				}
-			} while (found);
-			log.logDebug("return value for: " + value + "=" + returnValue);
-			return returnValue;
-		}
-		else
-		{
-			return value;
-		}
-	}
-
 	private void addFieldsToRowMeta(RowMetaInterface r, String origin)
 	{
-		//ValueMetaInterface totalGroups=new ValueMeta("ruleengine_groups", ValueMeta.TYPE_INTEGER);
-		ValueMetaInterface totalGroups=new ValueMetaInteger("ruleengine_groups");
+		ValueMetaInterface totalGroups=new ValueMetaInteger(FIELDNAME_RULEENGINE_GROUPS);
 		totalGroups.setOrigin(origin);
 		r.addValueMeta( totalGroups );
 		
-		//ValueMetaInterface totalGroupsFailed=new ValueMeta("ruleengine_groups_failed", ValueMeta.TYPE_INTEGER);
-		ValueMetaInterface totalGroupsFailed=new ValueMetaInteger("ruleengine_groups_failed");
+		ValueMetaInterface totalGroupsFailed=new ValueMetaInteger(FIELDNAME_RULEENGINE_GROUPS_FAILED);
 		totalGroupsFailed.setOrigin(origin);
 		r.addValueMeta( totalGroupsFailed );
 		
-		//ValueMetaInterface totalRules=new ValueMeta("ruleengine_rules", ValueMeta.TYPE_INTEGER);
-		ValueMetaInterface totalRules=new ValueMetaInteger("ruleengine_rules");
+		ValueMetaInterface totalGroupSkipped = new ValueMetaInteger(FIELDNAME_RULEENGINE_GROUPS_SKIPPED);
+		totalGroupSkipped.setOrigin(origin);
+		r.addValueMeta( totalGroupSkipped );
+		
+		ValueMetaInterface totalRules=new ValueMetaInteger(FIELDNAME_RULEENGINE_RULES);
 		totalRules.setOrigin(origin);
 		r.addValueMeta( totalRules );
 		
-		//ValueMetaInterface totalRulesFailed=new ValueMeta("ruleengine_rules_failed", ValueMeta.TYPE_INTEGER);
-		ValueMetaInterface totalRulesFailed=new ValueMetaInteger("ruleengine_rules_failed");
+		ValueMetaInterface totalRulesFailed=new ValueMetaInteger(FIELDNAME_RULEENGINE_RULES_FAILED);
 		totalRulesFailed.setOrigin(origin);
 		r.addValueMeta( totalRulesFailed );
 		
-		//ValueMetaInterface totalActions=new ValueMeta("ruleengine_actions", ValueMeta.TYPE_INTEGER);
-		ValueMetaInterface totalActions=new ValueMetaInteger("ruleengine_actions");
+		ValueMetaInterface totalActions=new ValueMetaInteger(FIELDNAME_RULEENGINE_ACTIONS);
 		totalActions.setOrigin(origin);
 		r.addValueMeta( totalActions );
 		

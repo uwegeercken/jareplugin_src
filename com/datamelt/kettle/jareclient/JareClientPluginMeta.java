@@ -134,6 +134,11 @@ public class JareClientPluginMeta extends BaseStepMeta implements StepMetaInterf
 		totalGroupsFailed.setOrigin(origin);
 		rowMeta.addValueMeta( totalGroupsFailed );
 		
+		//ValueMetaInterface totalGroupsSkipped=new ValueMeta("ruleengine_groups_skipped", ValueMeta.TYPE_INTEGER);
+		ValueMetaInterface totalGroupsSkipped=new ValueMetaInteger("ruleengine_groups_skipped");
+		totalGroupsSkipped.setOrigin(origin);
+		rowMeta.addValueMeta( totalGroupsSkipped );
+		
 		//ValueMetaInterface totalRules=new ValueMeta("ruleengine_rules", ValueMeta.TYPE_INTEGER);
 		ValueMetaInterface totalRules=new ValueMetaInteger("ruleengine_rules");
 		totalRules.setOrigin(origin);

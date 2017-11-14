@@ -38,6 +38,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
@@ -47,10 +48,12 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 	private JarePluginMeta input;
 
 	private Label        wLabelRuleFile, wLabelStepname, wLabelOutputType,wLabelStepMain, wLabelStepRuleResults;
-	private Text         wTextRuleFile, wTextStepname;
+	private Text         wTextStepname;
 	private Combo		 wComboOutputType, wComboStepRuleResults, wComboStepMain;
-	private FormData     wFormRuleFile, wFormStepname, wFormOutputType, wFormStepMain, wFormStepRuleResults;
+	private FormData     wFormBucket, wFormRuleFile, wFormStepname, wFormOutputType, wFormStepMain, wFormStepRuleResults;
+	private TextVar      wTextRuleFile;
 
+	
 	public JarePluginDialog(Shell parent, Object in, TransMeta transMeta, String sname)
 	{
 		super(parent, (BaseStepMeta)in, transMeta, sname);
@@ -66,9 +69,6 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 		shell = new Shell(parent, SWT.DIALOG_TRIM | SWT.RESIZE | SWT.MIN | SWT.MAX);
 		props.setLook( shell );
         setShellImage(shell, input);
-
-       
-        
         
 		ModifyListener lsMod = new ModifyListener() 
 		{
@@ -83,14 +83,14 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 		formLayout.marginHeight = Const.FORM_MARGIN;
 
 		shell.setLayout(formLayout);
-		shell.setText(Messages.getString("JarePluginDialog.Shell.Title")); //$NON-NLS-1$
+		shell.setText(Messages.getString("JarePluginDialog.Shell.Title"));
 		
 		int middle = props.getMiddlePct();
 		int margin = Const.MARGIN;
 
 		// Stepname line
 		wLabelStepname=new Label(shell, SWT.RIGHT);
-		wLabelStepname.setText(Messages.getString("JarePluginDialog.StepName.Label")); //$NON-NLS-1$
+		wLabelStepname.setText(Messages.getString("JarePluginDialog.StepName.Label"));
         props.setLook( wLabelStepname );
         wFormStepname=new FormData();
         wFormStepname.left = new FormAttachment(0, 0);
@@ -106,32 +106,32 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 		wFormStepname.top  = new FormAttachment(0, margin);
 		wFormStepname.right= new FormAttachment(100, 0);
 		wTextStepname.setLayoutData(wFormStepname);
-		
+
 		// Rule File Name line
 		wLabelRuleFile=new Label(shell, SWT.RIGHT);
-		wLabelRuleFile.setText(Messages.getString("JarePluginDialog.RuleFile.Label")); //$NON-NLS-1$
+		wLabelRuleFile.setText(Messages.getString("JarePluginDialog.RuleFile.Label"));
         props.setLook( wLabelRuleFile );
         wFormRuleFile=new FormData();
         wFormRuleFile.left = new FormAttachment(0, 0);
         wFormRuleFile.right= new FormAttachment(middle, -margin);
         wFormRuleFile.top  = new FormAttachment(wTextStepname, margin);
 		wLabelRuleFile.setLayoutData(wFormRuleFile);
-		wTextRuleFile=new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		wTextRuleFile = new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
 		if(input.getRuleFileName()!=null)
 		{
 			wTextRuleFile.setText(input.getRuleFileName());
 		}
-        props.setLook( wTextRuleFile );
-        wTextRuleFile.addModifyListener(lsMod);
-		wFormRuleFile=new FormData();
-		wFormRuleFile.left = new FormAttachment(middle, 0);
-		wFormRuleFile.top  = new FormAttachment(wTextStepname, margin);
-		wFormRuleFile.right= new FormAttachment(100, 0);
-		wTextRuleFile.setLayoutData(wFormRuleFile);
+		props.setLook( wTextRuleFile );
+	    wTextRuleFile.addModifyListener( lsMod );
+	    wFormBucket = new FormData();
+	    wFormBucket.left = new FormAttachment( middle, 0 );
+	    wFormBucket.top = new FormAttachment( wTextStepname, margin );
+	    wFormBucket.right = new FormAttachment( 100, 0 );
+	    wTextRuleFile.setLayoutData( wFormBucket );
 		
 		// Main Output Step
 		wLabelStepMain=new Label(shell, SWT.RIGHT);
-		wLabelStepMain.setText(Messages.getString("JarePluginDialog.Step.Main")); //$NON-NLS-1$
+		wLabelStepMain.setText(Messages.getString("JarePluginDialog.Step.Main"));
         props.setLook( wLabelStepMain );
         wFormStepMain=new FormData();
         wFormStepMain.left = new FormAttachment(0, 0);
@@ -158,7 +158,7 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 		
 		// Rule Results Output Step
 		wLabelStepRuleResults=new Label(shell, SWT.RIGHT);
-		wLabelStepRuleResults.setText(Messages.getString("JarePluginDialog.Step.RuleResults")); //$NON-NLS-1$
+		wLabelStepRuleResults.setText(Messages.getString("JarePluginDialog.Step.RuleResults"));
         props.setLook( wLabelStepRuleResults );
         wFormStepRuleResults=new FormData();
         wFormStepRuleResults.left = new FormAttachment(0, 0);
@@ -189,7 +189,7 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 		
 		// Rule Results Output Step Output Type
 		wLabelOutputType=new Label(shell, SWT.RIGHT);
-		wLabelOutputType.setText(Messages.getString("JarePluginDialog.OutputType.Label")); //$NON-NLS-1$
+		wLabelOutputType.setText(Messages.getString("JarePluginDialog.OutputType.Label"));
         props.setLook( wLabelOutputType );
         wFormOutputType=new FormData();
         wFormOutputType.left = new FormAttachment(0, 0);
@@ -211,9 +211,9 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
         wFormOutputType.right= new FormAttachment(100, 0);
 		wComboOutputType.setLayoutData(wFormOutputType);
 	
-		// Some buttons
+		// buttons
 		wOK=new Button(shell, SWT.PUSH);
-		wOK.setText(Messages.getString("System.Button.OK")); //$NON-NLS-1$
+		wOK.setText(Messages.getString("System.Button.OK"));
 		wCancel=new Button(shell, SWT.PUSH);
 		wCancel.setText(Messages.getString("System.Button.Cancel")); //$NON-NLS-1$
 
@@ -252,7 +252,7 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 		return stepname;
 	}
 	
-	// Read data from input (TextFileInputInfo)
+	// Read data from input
 	public void getData()
 	{
 		//wTextRuleFile.setText(input.getRuleFileName());

@@ -26,6 +26,6 @@ Java source files for the Pentaho Rule Engine Plugin Step. The compiled files ar
 
 Uwe Geercken - uwe.geercken@web.de
 
-last update: 2017-11-12
+last update: 2017-11-14
 
 
