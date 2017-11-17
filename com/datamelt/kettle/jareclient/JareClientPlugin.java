@@ -34,6 +34,8 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 
+import com.datamelt.rules.engine.BusinessRulesEngine;
+import com.datamelt.server.ClientHandler;
 import com.datamelt.server.RuleEngineClient;
 import com.datamelt.server.RuleEngineServerObject;
 import com.datamelt.util.HeaderRow;
@@ -57,7 +59,7 @@ import com.datamelt.util.RowFieldCollection;
  * @author uwe geercken - uwe.geercken@web.de
  * 
  * version 0.3 
- * last update: 2017-11-14 
+ * last update: 2017-11-16 
  */
 
 public class JareClientPlugin extends BaseStep implements StepInterface
@@ -129,12 +131,17 @@ public class JareClientPlugin extends BaseStep implements StepInterface
             {
             	// create client connection to server
             	client = new RuleEngineClient(serverName,Integer.parseInt(serverPort));
+            	log.logBasic("server is running business rule engine version: " + client.getServerObject(ClientHandler.RESPONSE_RULEENGINE_VERSION) + " - using: " + client.getServerObject(ClientHandler.RESPONSE_RULEFILE));
+            	if(Long.parseLong(client.getServerObject(ClientHandler.RESPONSE_NUMBER_OF_GROUPS))==0)
+        		{
+        			log.logBasic("attention: project zip file contains no rulegroups or no ruleroups that are active based on the valid from/until date");
+        		}
             }
             catch(Exception ex)
             {
             	log.logError("error creating ruleengine client instance",ex.fillInStackTrace());
             }
-            
+             
             first = false;
         }
 
@@ -149,13 +156,16 @@ public class JareClientPlugin extends BaseStep implements StepInterface
         {
         	RuleEngineServerObject response = client.getServerObject(fields);
         	// set the output row fields to the values received by the rule engine server
-        	outputRow[inputSize] = (long)response.getTotalGroups();
-        	outputRow[inputSize+1] = (long)response.getTotalGroups() - (long)response.getGroupsPassed();
+        	outputRow[inputSize]   = (long)response.getTotalGroups();
+        	outputRow[inputSize+1] = (long)response.getGroupsFailed(); 
         	outputRow[inputSize+2] = (long)response.getGroupsSkipped();
         	outputRow[inputSize+3] = (long)response.getTotalRules();
-        	outputRow[inputSize+4] = (long)response.getTotalRules() - (long)response.getRulesPassed();
+        	outputRow[inputSize+4] = (long)response.getRulesFailed();
         	outputRow[inputSize+5] = (long)response.getTotalActions();
         	
+        	// set the rowfield collection to the rowfield collection of the received object, as it was
+        	// run through the ruleengine and possibly contains updates
+        	fields = response.getFields();
         }
         catch(Exception ex)
         {        	
