@@ -32,10 +32,12 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.Group;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.ui.core.widget.TextVar;
@@ -50,8 +52,10 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 	private Label        wLabelRuleFile, wLabelStepname, wLabelOutputType,wLabelStepMain, wLabelStepRuleResults;
 	private Text         wTextStepname;
 	private Combo		 wComboOutputType, wComboStepRuleResults, wComboStepMain;
-	private FormData     wFormBucket, wFormRuleFile, wFormStepname, wFormOutputType, wFormStepMain, wFormStepRuleResults;
+	private FormData     wFormBucket, wFormRuleFile, wFormFileName,wFormStepname, wFormOutputType, wFormStepMain, wFormStepRuleResults, fdbFilename;
 	private TextVar      wTextRuleFile;
+	private Button		 wbFilename;
+	private Group 		 wFileName;
 
 	
 	public JarePluginDialog(Shell parent, Object in, TransMeta transMeta, String sname)
@@ -94,7 +98,7 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
         props.setLook( wLabelStepname );
         wFormStepname=new FormData();
         wFormStepname.left = new FormAttachment(0, 0);
-        wFormStepname.right= new FormAttachment(middle, -margin);
+        wFormStepname.right= new FormAttachment(middle, -middle/2);
         wFormStepname.top  = new FormAttachment(0, margin);
 		wLabelStepname.setLayoutData(wFormStepname);
 		wTextStepname=new Text(shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
@@ -102,20 +106,43 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
         props.setLook( wTextStepname );
         wTextStepname.addModifyListener(lsMod);
 		wFormStepname=new FormData();
-		wFormStepname.left = new FormAttachment(middle, 0);
+		wFormStepname.left = new FormAttachment(middle , 0);
 		wFormStepname.top  = new FormAttachment(0, margin);
 		wFormStepname.right= new FormAttachment(100, 0);
 		wTextStepname.setLayoutData(wFormStepname);
 
 		// Rule File Name line
+		
+		
 		wLabelRuleFile=new Label(shell, SWT.RIGHT);
 		wLabelRuleFile.setText(Messages.getString("JarePluginDialog.RuleFile.Label"));
         props.setLook( wLabelRuleFile );
         wFormRuleFile=new FormData();
         wFormRuleFile.left = new FormAttachment(0, 0);
         wFormRuleFile.right= new FormAttachment(middle, -margin);
-        wFormRuleFile.top  = new FormAttachment(wTextStepname, margin);
+        wFormRuleFile.top = new FormAttachment(wTextStepname, margin);
 		wLabelRuleFile.setLayoutData(wFormRuleFile);
+		
+		wbFilename = new Button( shell, SWT.PUSH | SWT.CENTER );
+	    wbFilename.setText(Messages.getString("JarePluginDialog.RuleFile.Browse"));
+	    wbFilename.setToolTipText(Messages.getString("JarePluginDialog.RuleFile.Browse.Tooltip"));
+	    props.setLook( wbFilename );
+	    wFormFileName=new FormData();
+	    //wFormFileName.left = new FormAttachment( wTextRuleFile, 0 );
+	    wFormFileName.right= new FormAttachment(100, 0);
+	    wFormFileName.top  = new FormAttachment(wTextStepname, margin);
+	    wbFilename.setLayoutData(wFormFileName);
+	    wbFilename.addSelectionListener( new SelectionAdapter() {
+	      public void widgetSelected( SelectionEvent e ) {
+	        FileDialog dialog = new FileDialog( shell, SWT.OPEN );
+	        dialog.setFilterExtensions( new String[] { "*.zip", "*.xml", "*" } );
+	        if ( dialog.open() != null ) {
+	            wTextRuleFile.setText( dialog.getFilterPath() + System.getProperty( "file.separator" ) + dialog.getFileName() );
+	            
+	          }
+	      }
+	    } );
+	    
 		wTextRuleFile = new TextVar( transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER );
 		if(input.getRuleFileName()!=null)
 		{
@@ -124,11 +151,14 @@ public class JarePluginDialog extends BaseStepDialog implements StepDialogInterf
 		props.setLook( wTextRuleFile );
 	    wTextRuleFile.addModifyListener( lsMod );
 	    wFormBucket = new FormData();
+	    wFormBucket.width=50;
 	    wFormBucket.left = new FormAttachment( middle, 0 );
 	    wFormBucket.top = new FormAttachment( wTextStepname, margin );
-	    wFormBucket.right = new FormAttachment( 100, 0 );
+	    wFormBucket.right = new FormAttachment( 90, 0 );
 	    wTextRuleFile.setLayoutData( wFormBucket );
 		
+	    
+	    
 		// Main Output Step
 		wLabelStepMain=new Label(shell, SWT.RIGHT);
 		wLabelStepMain.setText(Messages.getString("JarePluginDialog.Step.Main"));
