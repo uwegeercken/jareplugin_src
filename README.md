@@ -5,7 +5,7 @@ Java Rule Engine Plugin Step for Pentaho PDI.
 
 Java source files for the Pentaho Rule Engine Plugin Step. The compiled files are also available on github.
 
-    Copyright (C) 2008-2017  Uwe Geercken
+    Copyright (C) 2008-2020  Uwe Geercken
 
  Licensed to the Apache Software Foundation (ASF) under one
  or more contributor license agreements.  See the NOTICE file
@@ -26,6 +26,6 @@ Java source files for the Pentaho Rule Engine Plugin Step. The compiled files ar
 
 Uwe Geercken - uwe.geercken@web.de
 
-last update: 2017-11-14
+last update: 2020-08-27
 
 
