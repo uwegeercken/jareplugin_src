@@ -73,8 +73,8 @@ import com.datamelt.util.RowFieldCollection;
  * 
  * @author uwe geercken - uwe.geercken@web.de
  * 
- * version 0.4
- * last update: 2017-11-13 
+ * version 0.5
+ * last update: 2020-08-27 
  */
 
 public class JarePlugin extends BaseStep implements StepInterface
@@ -106,7 +106,7 @@ public class JarePlugin extends BaseStep implements StepInterface
 	
 	
 	private RowMetaInterface inputRowMeta;
-	private static HeaderRow header;
+	private HeaderRow header;
 	private int inputSize=0;
 	private String environmentFilename;
 	private String realFilename;
